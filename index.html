@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenZ: All-in-One Interactive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Black & Red (#19171b, #75020f, #51080d, #b8bcc3) -->
+    <!-- Application Structure Plan: This SPA is designed around a single-page architecture where content is dynamically loaded and shown/hidden based on navigation state. It starts with a simple landing and authentication view. Upon "login," a persistent header and navigation bar appear, allowing the user to seamlessly navigate between the Dashboard, Career Roadmap, Skill Gap Analyzer, AI Coach, and Community/Profile pages. This structure was chosen to provide a smooth, app-like experience without the need for page reloads, making it efficient and user-friendly. -->
+    <!-- Visualization & Content Choices: 
+        - Landing Page: Static HTML/CSS to present key features and a call to action.
+        - Dashboard: A static progress bar (HTML/CSS) and cards to summarize key information.
+        - Career Roadmap: A stepped progress tracker built with HTML/CSS/JS.
+        - Skill Gap Analyzer: A dynamic bar chart (Chart.js) to compare skills.
+        - AI Coach: HTML forms and text areas for user interaction.
+        - Community/Profile: Card-based lists and forms for profile management.
+        - All navigation and content switching is handled by JavaScript, ensuring a fluid user experience. The design avoids external images or SVGs, using only Unicode characters for icons to maintain a lightweight file.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+        body {
+            background-color: #000000;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="text-white font-sans">
+
+    <!-- Landing & Auth Pages (Initial View) -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center text-white p-4 bg-black">
+        <div class="bg-transparent text-white p-6 rounded-lg w-full max-w-md">
+            <!-- Landing Page View -->
+            <div id="landing-page" class="page-content active text-center">
+                <div class="mb-8">
+                    <svg class="mx-auto" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="30" cy="30" r="28" stroke="#51080d" stroke-width="4"/>
+                        <circle cx="30" cy="30" r="18" fill="#75020f"/>
+                        <circle cx="30" cy="30" r="8" fill="#19171b"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold mb-2 text-white">Your Career, Elevated.</h1>
+                <p class="text-sm sm:text-base text-neutral-400 mb-6">A.I. powered guidance to find your path, build skills, and land the job you want.</p>
+                <button id="get-started-btn" class="bg-[#51080d] text-white font-semibold py-2 px-6 rounded-lg hover:bg-[#75020f] transition-colors card-hover">Get Started - It's Free</button>
+            </div>
+            
+            <!-- Auth Form View -->
+            <div id="auth-page" class="page-content text-center">
+                <div class="mb-8">
+                    <svg class="mx-auto" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="30" cy="30" r="28" stroke="#51080d" stroke-width="4"/>
+                        <circle cx="30" cy="30" r="18" fill="#75020f"/>
+                        <circle cx="30" cy="30" r="8" fill="#19171b"/>
+                    </svg>
+                </div>
+                <h2 id="auth-title" class="text-2xl font-bold mb-1 text-white">Yooo, welcome back!</h2>
+                <p class="text-sm text-neutral-400 mb-6">First time here? <a href="#" id="signup-link" class="text-white hover:underline">Sign up for free</a></p>
+
+                <form id="login-form" class="space-y-4">
+                    <input type="email" id="login-email" placeholder="Your email" class="w-full p-3 border border-[#51080d] rounded-lg focus:ring-2 focus:ring-[#75020f] bg-black text-white">
+                    <input type="password" id="login-password" placeholder="Password" class="w-full p-3 border border-[#51080d] rounded-lg focus:ring-2 focus:ring-[#75020f] bg-black text-white">
+                    <button type="submit" class="w-full bg-[#75020f] text-white font-bold py-3 rounded-lg hover:bg-[#51080d] transition-colors card-hover">Sign in</button>
+                    <div class="text-center text-sm text-neutral-400 my-4">
+                        <a href="#" class="hover:underline">Sign in using magic link</a>
+                    </div>
+                </form>
+
+                <div class="flex items-center my-6">
+                    <hr class="flex-grow border-t border-neutral-700">
+                    <span class="mx-4 text-neutral-500 text-sm">or</span>
+                    <hr class="flex-grow border-t border-neutral-700">
+                </div>
+
+                <button id="sso-btn" class="w-full bg-[#1e1e1e] text-white font-semibold py-3 rounded-lg border border-[#51080d] hover:bg-[#27262a] transition-colors card-hover">Single sign-on (SSO)</button>
+                <div class="mt-8 text-xs text-neutral-500">
+                    You acknowledge that you read, and agree, to our <a href="#" class="text-neutral-400 hover:underline">Terms of Service</a> and our <a href="#" class="text-neutral-400 hover:underline">Privacy Policy</a>.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App Content (Visible after Login) -->
+    <div id="main-app" class="hidden min-h-screen">
+        <!-- Header & Navigation -->
+        <header class="bg-[#19171b] shadow-sm sticky top-0 z-50">
+            <nav class="container mx-auto px-4 py-3 flex items-center justify-between border-b border-[#51080d]">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl font-bold text-white">ZenZ</span>
+                </div>
+                <div class="flex items-center space-x-4 sm:space-x-6 overflow-x-auto whitespace-nowrap">
+                    <a href="#" class="nav-link text-sm font-medium text-neutral-400 hover:text-white transition-colors" data-page="dashboard">Dashboard</a>
+                    <a href="#" class="nav-link text-sm font-medium text-neutral-400 hover:text-white transition-colors" data-page="roadmap">Roadmap</a>
+                    <a href="#" class="nav-link text-sm font-medium text-neutral-400 hover:text-white transition-colors" data-page="analyzer">Skills</a>
+                    <a href="#" class="nav-link text-sm font-medium text-neutral-400 hover:text-white transition-colors" data-page="coach">Coach</a>
+                    <a href="#" class="nav-link text-sm font-medium text-neutral-400 hover:text-white transition-colors" data-page="community">Community</a>
+                    <a href="#" class="nav-link text-sm font-medium text-neutral-400 hover:text-white transition-colors" data-page="profile">Profile</a>
+                </div>
+            </nav>
+        </header>
+    
+        <main class="container mx-auto px-4 py-8">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page-content active">
+                <h1 class="text-3xl font-bold mb-2 text-white">Welcome Back, X!</h1>
+                <p class="text-neutral-400 mb-6">Here's a quick look at your progress.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] flex flex-col items-center card-hover">
+                        <div class="chart-container h-[200px] w-[200px] mb-4">
+                            <canvas id="readiness-chart"></canvas>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2 text-white">85%</h2>
+                        <p class="text-sm text-neutral-400">Placement Readiness Score</p>
+                    </div>
+                    <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-xl font-bold mb-2 text-white">Your Top Skills</h2>
+                        <div class="chart-container h-[200px] w-full">
+                            <canvas id="top-skills-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] md:col-span-2">
+                        <h2 class="text-xl font-bold mb-4 text-white">Recent Activity</h2>
+                        <ul class="space-y-4">
+                            <li class="flex items-start space-x-4">
+                                <div class="w-10 h-10 rounded-full bg-[#51080d]"></div>
+                                <div>
+                                    <p class="text-sm font-semibold text-white">Skill Gap Analysis Complete</p>
+                                    <p class="text-xs text-neutral-400 mt-1">You analyzed your skills for the Full-Stack Developer role and identified 3 key gaps. <a href="#" class="text-white hover:underline">View Report</a></p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-4">
+                                <div class="w-10 h-10 rounded-full bg-[#75020f]"></div>
+                                <div>
+                                    <p class="text-sm font-semibold text-white">New Connection: Alex Morgan</p>
+                                    <p class="text-xs text-neutral-400 mt-1">You are now connected with a senior UX Designer in the community. <a href="#" class="text-white hover:underline">Message</a></p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-4">
+                                <div class="w-10 h-10 rounded-full bg-[#51080d]"></div>
+                                <div>
+                                    <p class="text-sm font-semibold text-white">Mock Interview Practice</p>
+                                    <p class="text-xs text-neutral-400 mt-1">You completed a mock interview for a Product Manager role. Check your feedback to improve. <a href="#" class="text-white hover:underline">Review Feedback</a></p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Career Roadmap Page -->
+            <div id="roadmap" class="page-content">
+                <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] mb-6 card-hover">
+                    <h2 class="text-xl font-bold mb-2 text-white">Next Step: Your Path</h2>
+                    <p class="text-sm text-neutral-400 mb-4">Your personalized roadmap is ready. Let's get started.</p>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-center space-x-2">
+                            <span class="text-[#75020f] font-bold">●</span>
+                            <span>**Current Goal:** Master Core Skills</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <span class="text-[#75020f] font-bold">●</span>
+                            <span>**Next Action:** Complete "Intro to APIs" course</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <span class="text-[#75020f] font-bold">●</span>
+                            <span>**Recommended Role:** Full-Stack Developer</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <h1 class="text-3xl font-bold mb-2 text-white">My Career Roadmap</h1>
+                <p class="text-neutral-400 mb-6">Your personalized path to becoming a Full-Stack Developer.</p>
+                <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-4">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="w-16 h-16 flex items-center justify-center rounded-full bg-[#51080d] text-white font-semibold text-2xl" onclick="showRoadmapStep('profile')">✓</div>
+                            <span class="text-center text-sm">Complete Profile</span>
+                        </div>
+                        <div class="hidden sm:block text-[#75020f] text-3xl font-thin">→</div>
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="w-16 h-16 flex items-center justify-center rounded-full bg-[#51080d] text-white font-semibold text-2xl" onclick="showRoadmapStep('analyze')">✓</div>
+                            <span class="text-center text-sm">Analyze Skills</span>
+                        </div>
+                        <div class="hidden sm:block text-[#75020f] text-3xl font-thin">→</div>
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="w-16 h-16 flex items-center justify-center rounded-full border-2 border-[#75020f] text-[#75020f] font-semibold" onclick="showRoadmapStep('learn')">3</div>
+                            <span class="text-center text-sm">Learn Core Skills</span>
+                        </div>
+                        <div class="hidden sm:block text-[#75020f] text-3xl font-thin">→</div>
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="w-16 h-16 flex items-center justify-center rounded-full border-2 border-[#51080d] text-[#51080d] font-semibold" onclick="showRoadmapStep('build')">4</div>
+                            <span class="text-center text-sm">Build Portfolio</span>
+                        </div>
+                        <div class="hidden sm:block text-[#75020f] text-3xl font-thin">→</div>
+                        <div class="flex flex-col items-center space-y-2">
+                            <div class="w-16 h-16 flex items-center justify-center rounded-full border-2 border-[#51080d] text-[#51080d] font-semibold" onclick="showRoadmapStep('practice')">5</div>
+                            <span class="text-center text-sm">Practice Interviews</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="roadmap-details-content" class="mt-8">
+                    <div id="step-profile" class="roadmap-step-content page-content active bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-xl font-bold mb-4 text-white">Step 1: Complete Your Profile</h2>
+                        <p class="text-neutral-400 mb-2">The first step to a personalized journey is to tell us about you. This includes your existing skills, interests, and career goals. Your profile is the foundation for all future recommendations.</p>
+                        <p class="text-sm text-neutral-400 mt-4">**Recommended Action:**</p>
+                        <ul class="list-disc list-inside text-sm text-neutral-400 space-y-1 mt-1">
+                            <li>Fill out your profile completely.</li>
+                            <li>List all your current skills, even those not directly related to your target career.</li>
+                        </ul>
+                    </div>
+                    <div id="step-analyze" class="roadmap-step-content page-content bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-xl font-bold mb-4 text-white">Step 2: Analyze Your Skill Gap</h2>
+                        <p class="text-neutral-400 mb-2">In this step, the platform uses your profile data to identify the skills you need to acquire. Our AI engine compares your existing skills to the industry standards for your target role.</p>
+                         <p class="text-sm text-neutral-400 mt-4">**Recommended Action:**</p>
+                        <ul class="list-disc list-inside text-sm text-neutral-400 space-y-1 mt-1">
+                            <li>View your personalized skills report.</li>
+                            <li>Identify your biggest skill gaps.</li>
+                            <li>Start focusing on the skills with the lowest scores.</li>
+                        </ul>
+                    </div>
+                    <div id="step-learn" class="roadmap-step-content page-content bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-xl font-bold mb-4 text-white">Step 3: Learn Core Skills</h2>
+                        <p class="text-neutral-400 mb-2">This is the most critical phase where you will acquire the foundational knowledge required for your target role. Focus on hands-on projects and continuous learning.</p>
+                        <ul class="list-disc list-inside text-sm text-neutral-400 space-y-1 mt-1">
+                            <li>**Courses:** "Introduction to APIs" (Coursera), "React Essentials" (Udemy)</li>
+                            <li>**Articles:** "JavaScript ES6+ for Professionals" (MDN Web Docs)</li>
+                            <li>**Projects:** Build a simple to-do list app with a REST API.</li>
+                        </ul>
+                    </div>
+                    <div id="step-build" class="roadmap-step-content page-content bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-xl font-bold mb-4 text-white">Step 4: Build a Portfolio</h2>
+                        <p class="text-neutral-400 mb-2">A strong portfolio is essential for showcasing your skills to employers. This phase focuses on applying what you've learned to real-world projects.</p>
+                        <ul class="list-disc list-inside text-sm text-neutral-400 space-y-1 mt-1">
+                             <li>**Courses:** "Full-Stack Web Development" (Coursera)</li>
+                            <li>**Projects:** Create a personal website, develop a clone of a popular app, or contribute to an open-source project.</li>
+                        </ul>
+                    </div>
+                    <div id="step-practice" class="roadmap-step-content page-content bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-xl font-bold mb-4 text-white">Step 5: Practice for Interviews</h2>
+                        <p class="text-neutral-400 mb-2">This final step prepares you for the job market. Our AI coach will simulate realistic interviews and provide immediate feedback on your performance, helping you to build confidence.</p>
+                         <p class="text-sm text-neutral-400 mt-4">**Recommended Action:**</p>
+                        <ul class="list-disc list-inside text-sm text-neutral-400 space-y-1 mt-1">
+                            <li>Review common interview questions for your target role.</li>
+                            <li>Use the AI Interview Coach to practice your answers.</li>
+                            <li>Connect with a mentor for a live mock interview.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Skill Gap Analyzer Page -->
+            <div id="analyzer" class="page-content">
+                <h1 class="text-3xl font-bold mb-2 text-white">Skill Gap Analyzer</h1>
+                <p class="text-neutral-400 mb-6">Compare your skills against your target role.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Your Current Role:</label>
+                        <select class="w-full p-2 rounded-md border border-[#51080d] bg-black text-white text-sm">
+                            <option class="bg-[#19171b]">Frontend Developer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Your Target Role:</label>
+                        <select class="w-full p-2 rounded-md border border-[#51080d] bg-black text-white text-sm">
+                            <option class="bg-[#19171b]">Full-Stack Developer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                    <h2 class="text-xl font-bold mb-4 text-white">Skill Comparison</h2>
+                    <div class="chart-container">
+                        <canvas id="skill-gap-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Resume & Interview Coach Page -->
+            <div id="coach" class="page-content">
+                <h1 class="text-3xl font-bold mb-2 text-white">AI Coach</h1>
+                <p class="text-neutral-400 mb-6">Get AI-powered feedback to land the job you want.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-black p-6 rounded-lg shadow-sm mb-6 border border-[#51080d] card-hover">
+                        <h2 class="text-2xl font-bold mb-4 text-white">Resume Coach</h2>
+                        <div class="p-6 border-2 border-dashed border-[#51080d] rounded-lg text-center mb-4">
+                            <p class="text-neutral-400 mb-2">Drag & Drop or Upload Resume</p>
+                            <button class="bg-[#75020f] text-white font-semibold py-2 px-4 rounded-full text-sm hover:bg-[#51080d] card-hover">Analyze Resume</button>
+                        </div>
+                        <div class="bg-black p-4 rounded-md min-h-[100px] text-sm text-neutral-200 border border-[#51080d]">Your resume feedback will appear here.</div>
+                        <div class="chart-container h-[300px] w-full mt-4">
+                            <canvas id="skill-balance-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-2xl font-bold mb-4 text-white">Interview Coach</h2>
+                        <select class="w-full p-2 rounded-md border border-[#51080d] bg-black mb-4 text-sm text-white">
+                            <option class="bg-[#19171b]">Select a Job Role</option>
+                        </select>
+                        <button class="bg-[#75020f] text-white font-semibold py-2 px-4 rounded-full text-sm mb-4 hover:bg-[#51080d] card-hover">Start Mock Interview</button>
+                        <div class="bg-black p-4 rounded-md min-h-[100px] text-sm text-neutral-200 border border-[#51080d]">Interview questions and feedback will appear here.</div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Community & Profile Page -->
+            <div id="community" class="page-content">
+                <h1 class="text-3xl font-bold mb-2 text-white">Community & Mentors</h1>
+                <p class="text-neutral-400 mb-6">Connect with a network of professionals and peers.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <input type="text" placeholder="Find a mentor" class="w-full p-2 border border-[#51080d] rounded-md mb-4 text-sm bg-black text-white">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-black p-4 rounded-lg flex items-center space-x-4 border border-[#51080d]">
+                                <div class="w-12 h-12 rounded-full bg-[#51080d]"></div>
+                                <div>
+                                    <p class="font-bold text-white">Alex Morgan</p>
+                                    <p class="text-sm text-neutral-400">UX Designer</p>
+                                </div>
+                                <button class="ml-auto bg-[#51080d] text-white text-sm py-1 px-3 rounded-full hover:bg-[#75020f] card-hover">Message</button>
+                            </div>
+                            <div class="bg-black p-4 rounded-lg flex items-center space-x-4 border border-[#51080d]">
+                                <div class="w-12 h-12 rounded-full bg-[#51080d]"></div>
+                                <div>
+                                    <p class="font-bold text-white">X Rodriguez</p>
+                                    <p class="text-sm text-neutral-400">Product Manager</p>
+                                </div>
+                                <button class="ml-auto bg-[#51080d] text-white text-sm py-1 px-3 rounded-full hover:bg-[#75020f] card-hover">Message</button>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                        <h2 class="text-2xl font-bold mb-4 text-white">Your Engagement</h2>
+                        <div class="chart-container h-[200px] w-full">
+                            <canvas id="engagement-chart"></canvas>
+                        </div>
+                     </div>
+                </div>
+            </div>
+            
+            <!-- Profile Page -->
+            <div id="profile" class="page-content">
+                <h1 class="text-3xl font-bold mb-2 text-white">My Profile & Settings</h1>
+                <p class="text-neutral-400 mb-6">Manage your personal information and account settings.</p>
+                <div class="bg-black p-6 rounded-lg shadow-sm border border-[#51080d] card-hover">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Profile Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Name</label>
+                            <input type="text" value="X Doe" class="w-full p-2 border border-[#51080d] rounded-md text-sm bg-black text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Email</label>
+                            <input type="email" value="x.doe@example.com" class="w-full p-2 border border-[#51080d] rounded-md text-sm bg-black text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">About Me</label>
+                            <textarea rows="3" class="w-full p-2 border border-[#51080d] rounded-md text-sm bg-black text-white">Aspiring software developer with a passion for learning new technologies.</textarea>
+                        </div>
+                    </div>
+                    <button class="bg-[#51080d] text-white font-semibold py-2 px-4 rounded-full mt-4 text-sm hover:bg-[#75020f]">Save Changes</button>
+                </div>
+            </div>
+    
+        </main>
+    </div>
+    
+    <script>
+        let chartsInitialized = false;
+
+        const showPage = (pageId) => {
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if (pageId === 'dashboard' && !chartsInitialized) {
+                initializeCharts();
+                chartsInitialized = true;
+            }
+        };
+
+        const updateNavLinks = (activePage) => {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.dataset.page === activePage) {
+                    link.classList.add('text-white');
+                    link.classList.remove('text-neutral-400');
+                } else {
+                    link.classList.remove('text-white');
+                    link.classList.add('text-neutral-400');
+                }
+            });
+        };
+
+        const initializeCharts = () => {
+            const chartColors = {
+                main: '#51080d',
+                accent: '#75020f',
+                background: 'rgba(0,0,0,0)',
+                text: '#E5E5E5'
+            };
+
+            const readinessCtx = document.getElementById('readiness-chart').getContext('2d');
+            new Chart(readinessCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Remaining'],
+                    datasets: [{
+                        data: [85, 15],
+                        backgroundColor: [chartColors.accent, chartColors.main],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: { label: (context) => context.label + ': ' + context.raw + '%' }
+                        }
+                    }
+                }
+            });
+
+            const topSkillsCtx = document.getElementById('top-skills-chart').getContext('2d');
+            new Chart(topSkillsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['JavaScript', 'React', 'HTML/CSS', 'Node.js'],
+                    datasets: [{
+                        label: 'Skill Proficiency',
+                        data: [90, 85, 95, 70],
+                        backgroundColor: chartColors.accent,
+                        borderColor: chartColors.accent,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { display: false },
+                            ticks: { color: chartColors.text }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: chartColors.text }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            const skillGapCtx = document.getElementById('skill-gap-chart').getContext('2d');
+            new Chart(skillGapCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['JavaScript', 'HTML/CSS', 'React', 'Node.js', 'Databases', 'API Design'],
+                    datasets: [{
+                        label: 'Your Skills',
+                        data: [90, 95, 85, 70, 50, 40],
+                        backgroundColor: chartColors.accent,
+                        borderColor: chartColors.accent,
+                        borderWidth: 1
+                    }, {
+                        label: 'Required Skills',
+                        data: [95, 95, 90, 80, 75, 70],
+                        backgroundColor: chartColors.main,
+                        borderColor: chartColors.main,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: false,
+                            grid: { display: false },
+                            ticks: { color: chartColors.text }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: chartColors.background },
+                            ticks: { color: chartColors.text }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: chartColors.text }
+                        }
+                    }
+                }
+            });
+
+            const skillBalanceCtx = document.getElementById('skill-balance-chart').getContext('2d');
+            new Chart(skillBalanceCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Frontend', 'Backend', 'Databases', 'DevOps', 'UI/UX'],
+                    datasets: [{
+                        label: 'Skill Balance',
+                        data: [85, 60, 50, 40, 75],
+                        backgroundColor: 'rgba(117, 2, 15, 0.2)',
+                        borderColor: chartColors.accent,
+                        pointBackgroundColor: chartColors.accent,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: chartColors.accent
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: chartColors.background },
+                            grid: { color: chartColors.background },
+                            pointLabels: { color: chartColors.text },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: chartColors.text }
+                        }
+                    }
+                }
+            });
+
+            const engagementCtx = document.getElementById('engagement-chart').getContext('2d');
+            new Chart(engagementCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Connections',
+                        data: [5, 8, 12, 15, 20],
+                        borderColor: chartColors.accent,
+                        backgroundColor: 'rgba(117, 2, 15, 0.2)',
+                        tension: 0.4,
+                        pointStyle: 'circle',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: chartColors.text }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: chartColors.background },
+                            ticks: { color: chartColors.text }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        };
+
+        document.getElementById('get-started-btn').addEventListener('click', () => {
+            document.getElementById('landing-page').classList.remove('active');
+            document.getElementById('auth-page').classList.add('active');
+        });
+
+        document.getElementById('signup-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('auth-title').textContent = 'Join the Career Platform';
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+            document.getElementById('signup-link').style.display = 'none';
+        });
+
+        document.getElementById('sso-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            showPage('dashboard');
+        });
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            showPage('dashboard');
+        });
+        
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.dataset.page;
+                showPage(pageId);
+                updateNavLinks(pageId);
+            });
+        });
+
+        const showRoadmapStep = (stepId) => {
+            document.querySelectorAll('.roadmap-step-content').forEach(step => step.classList.remove('active'));
+            document.getElementById(`step-${stepId}`).classList.add('active');
+        };
+
+    </script>
+</body>
+</html>
